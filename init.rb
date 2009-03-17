@@ -12,7 +12,6 @@ require 'net/http_multipart_post'
 require 'facebooker/rails/controller'
 require 'facebooker/rails/facebook_url_rewriting'
 require 'facebooker/rails/facebook_session_handling'
-require 'facebooker/rails/facebook_asset_path'
 require 'facebooker/rails/facebook_request_fix'
 require 'facebooker/rails/routing'
 require 'facebooker/rails/facebook_pretty_errors' rescue nil
@@ -68,3 +67,6 @@ end
 # pull :canvas=> into env in routing to allow for conditions
 ActionController::Routing::RouteSet.send :include,  Facebooker::Rails::Routing::RouteSetExtensions
 ActionController::Routing::RouteSet::Mapper.send :include, Facebooker::Rails::Routing::MapperExtensions
+
+Mime::Type.register_alias "text/html", :fbml
+Mime::Type.register_alias "text/javascript", :fbjs

@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/test_helper.rb'
+require File.expand_path(File.dirname(__FILE__) + '/test_helper')
 require 'net/http_multipart_post'
 class TestFacebooker < Test::Unit::TestCase
 
@@ -281,6 +281,13 @@ class TestFacebooker < Test::Unit::TestCase
     expect_http_posts_with_responses(example_photo_tags_xml)
     tag = @session.get_tags([97503428461115571]).first
     assert_equal ['65.4248', '16.8627'], tag.coordinates
+  end
+  
+  def test_can_upload_video
+    mock_http = establish_session
+    mock_http.should_receive(:post_multipart_form).and_return(example_upload_video_xml).once
+    f = Net::HTTP::MultipartPostFile.new("party.mp4", "video/mpeg", "RAW DATA")
+    assert_equal "Some Epic", @session.user.upload_video(f).title
   end
   
   def test_can_get_app_profile_fbml_for_user
@@ -904,4 +911,15 @@ class TestFacebooker < Test::Unit::TestCase
     XML
   end
   
+  def example_upload_video_xml
+    <<-XML
+<?xml version="1.0" encoding="UTF-8"?> 
+<video_upload_response xmlns="http://api.facebook.com/1.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://api.facebook.com/1.0/ http://api.facebook.com/1.0/facebook.xsd">
+    <vid>15943367753</vid>
+    <title>Some Epic</title>
+    <description>Check it out</description>
+    <link>http://www.facebook.com/video/video.php?v=15943367753</link>
+  </video_upload_response>
+    XML
+  end
 end

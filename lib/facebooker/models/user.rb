@@ -10,8 +10,8 @@ module Facebooker
       include Model
       attr_accessor :message, :time, :status_id
     end
-    FIELDS = [:status, :political, :pic_small, :name, :quotes, :is_app_user, :tv, :profile_update_time, :meeting_sex, :hs_info, :timezone, :relationship_status, :hometown_location, :about_me, :wall_count, :significant_other_id, :pic_big, :music, :uid, :work_history, :sex, :religion, :notes_count, :activities, :pic_square, :movies, :has_added_app, :education_history, :birthday, :first_name, :meeting_for, :last_name, :interests, :current_location, :pic, :books, :affiliations, :locale, :profile_url, :proxied_email,:email_hashes]
-    STANDARD_FIELDS = [:uid, :first_name, :last_name, :name, :timezone, :birthday, :sex, :affiliations, :locale, :profile_url]
+    FIELDS = [:status, :political, :pic_small, :name, :quotes, :is_app_user, :tv, :profile_update_time, :meeting_sex, :hs_info, :timezone, :relationship_status, :hometown_location, :about_me, :wall_count, :significant_other_id, :pic_big, :music, :uid, :work_history, :sex, :religion, :notes_count, :activities, :pic_square, :movies, :has_added_app, :education_history, :birthday, :first_name, :meeting_for, :last_name, :interests, :current_location, :pic, :books, :affiliations, :locale, :profile_url, :proxied_email, :email_hashes, :allowed_restrictions]
+    STANDARD_FIELDS = [:uid, :first_name, :last_name, :name, :timezone, :birthday, :sex, :affiliations, :locale, :profile_url, :pic_square]
     populating_attr_accessor *FIELDS
     attr_reader :affiliations
     populating_hash_settable_accessor :current_location, Location
@@ -204,6 +204,38 @@ module Facebooker
         options.merge(nil => multipart_post_file)))
     end
     
+    # Upload a video to the user's profile.
+    #
+    # In your view, create a multipart form that posts directly to your application (not through canvas):
+    #
+    #   <% form_tag videos_url(:canvas => false), :html => {:multipart => true, :promptpermission => 'video_upload'} do %>
+    #     Video: <%= file_field_tag 'video' %>
+    #     Title: <%= text_area_tag 'title' %>
+    #     Description: <%= text_area_tag 'description' %>
+    #     <%= submit_tag 'Upload Video', :class => 'inputsubmit' %>
+    #   <% end %>
+    # 
+    # And in your controller: 
+    #
+    #   class VideosController < ApplicationController
+    #     def create
+    #       file = Net::HTTP::MultipartPostFile.new(
+    #         params[:photo].original_filename,
+    #         params[:photo].content_type,
+    #         params[:photo].read
+    #       )
+    #     
+    #       @video = facebook_session.user.upload_video(file, :description => params[:description])
+    #       redirect_to videos_url(:canvas => true)
+    #     end
+    #   end
+    #
+    # Options correspond to http://wiki.developers.facebook.com/index.php/Video.upload
+    def upload_video(multipart_post_file, options = {})
+      Video.from_hash(session.post_file('facebook.video.upload',
+        options.merge(nil => multipart_post_file, :base => Facebooker.video_server_base)))
+    end
+    
     def profile_fbml
       session.post('facebook.profile.getFBML', :uid => id)  
     end    
@@ -314,7 +346,7 @@ module Facebooker
     ##
     # Two Facebooker::User objects should be considered equal if their Facebook ids are equal
     def ==(other_user)
-      id == other_user.id
+      other_user.is_a?(User) && id == other_user.id
     end
     
     

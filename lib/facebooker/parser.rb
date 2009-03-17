@@ -205,6 +205,18 @@ module Facebooker
     end
   end
   
+  class SetRestrictionInfo < Parser#:nodoc:
+    def self.process(data)
+      element('admin_setRestrictionInfo_response', data).text_value
+    end
+  end  
+  
+  class GetRestrictionInfo < Parser#:nodoc:
+    def self.process(data)
+      element('admin_getRestrictionInfo_response', data).text_value
+    end
+  end
+  
   class GetAllocation < Parser#:nodoc:
     def self.process(data)
       element('admin_getAllocation_response', data).text_value
@@ -291,6 +303,12 @@ module Facebooker
   class UploadPhoto < Parser#:nodoc:
     def self.process(data)
       hashinate(element('photos_upload_response', data))
+    end
+  end
+
+  class UploadVideo < Parser#:nodoc:
+    def self.process(data)
+      hashinate(element('video_upload_response', data))
     end
   end
   
@@ -444,6 +462,18 @@ module Facebooker
     end
   end  
 
+  class SmsSend < Parser#:nodoc:
+    def self.process(data)
+      element('sms_send_response', data).text_value == '0'
+    end
+  end
+  
+  class SmsCanSend < Parser#:nodoc:
+    def self.process(data)
+      element('sms_canSend_response', data).text_value
+    end
+  end
+
   class Errors < Parser#:nodoc:
     EXCEPTIONS = {
       1 	=> Facebooker::Session::UnknownError,
@@ -533,6 +563,8 @@ module Facebooker
       'facebook.data.getCookies' => GetCookies,
       'facebook.admin.setAppProperties' => SetAppProperties,
       'facebook.admin.getAppProperties' => GetAppProperties,
+      'facebook.admin.setRestrictionInfo' => SetRestrictionInfo,
+      'facebook.admin.getRestrictionInfo' => GetRestrictionInfo,
       'facebook.admin.getAllocation' => GetAllocation,
       'facebook.batch.run' => BatchRun,
       'facebook.fql.query' => FqlQuery,
@@ -548,7 +580,10 @@ module Facebooker
       'facebook.groups.getMembers' => GroupGetMembers,
       'facebook.notifications.sendEmail' => NotificationsSendEmail,
       'facebook.data.getUserPreference' => GetPreference,
-      'facebook.data.setUserPreference' => SetPreference
+      'facebook.data.setUserPreference' => SetPreference,
+      'facebook.video.upload' => UploadVideo,
+      'facebook.sms.send' => SmsSend,
+      'facebook.sms.canSend' => SmsCanSend
     }
   end
 end

@@ -100,7 +100,7 @@ module Facebooker
       @timeout
     end
    
-    [:api_key,:secret_key, :www_server_base_url,:login_url_base,:install_url_base,:api_rest_path,:api_server_base,:api_server_base_url,:canvas_server_base].each do |delegated_method|
+    [:api_key,:secret_key, :www_server_base_url,:login_url_base,:install_url_base,:api_rest_path,:api_server_base,:api_server_base_url,:canvas_server_base, :video_server_base].each do |delegated_method|
       define_method(delegated_method){ return current_adapter.send(delegated_method)}
     end
     
@@ -147,6 +147,7 @@ require 'facebooker/service'
 require 'facebooker/server_cache'
 require 'facebooker/data'
 require 'facebooker/admin'
+require 'facebooker/mobile'
 require 'facebooker/session'
 require 'facebooker/version'
 require 'facebooker/models/location'
@@ -161,11 +162,13 @@ require 'facebooker/models/page'
 require 'facebooker/models/photo'
 require 'facebooker/models/cookie'
 require 'facebooker/models/applicationproperties'
+require 'facebooker/models/applicationrestrictions'
 require 'facebooker/models/tag'
 require 'facebooker/models/user'
 require 'facebooker/models/info_item'
 require 'facebooker/models/info_section'
+require 'facebooker/models/friend_list'
+require 'facebooker/models/video'
 require 'facebooker/adapters/adapter_base'
 require 'facebooker/adapters/facebook_adapter'
 require 'facebooker/adapters/bebo_adapter'
-require 'facebooker/models/friend_list'

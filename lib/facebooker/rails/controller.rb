@@ -6,8 +6,8 @@ module Facebooker
       include Facebooker::Rails::ProfilePublisherExtensions
       def self.included(controller)
         controller.extend(ClassMethods)
-        controller.before_filter :set_adapter
-        controller.before_filter :set_fbml_format
+        #controller.before_filter :set_adapter <-- security hole noted by vchu
+        controller.before_filter :set_facebook_request_format
         controller.helper_attr :facebook_session_parameters
         controller.helper_method :request_comes_from_facebook?
       end
@@ -21,15 +21,25 @@ module Facebooker
         {:fb_sig_session_key=>params[:fb_sig_session_key]}
       end
       
+      def create_facebook_session
+        secure_with_facebook_params! || secure_with_cookies! || secure_with_token!
+      end
       
       def set_facebook_session
-        returning session_set = session_already_secured? ||  secure_with_facebook_params! || secure_with_cookies! || secure_with_token!  do
-          if session_set
-            capture_facebook_friends_if_available! 
-            Session.current = facebook_session
-          end
+        # first, see if we already have a session
+        session_set = session_already_secured?
+        # if not, see if we can load it from the environment
+        unless session_set
+          session_set = create_facebook_session
+          session[:facebook_session] = @facebook_session if session_set
         end
+        if session_set
+          capture_facebook_friends_if_available! 
+          Session.current = facebook_session
+        end
+        return session_set
       end
+      
       
       def facebook_params
         @facebook_params ||= verified_facebook_params
@@ -101,7 +111,7 @@ module Facebooker
           
           @facebook_session = new_facebook_session
           @facebook_session.secure_with!(parsed['session_key'],parsed['user'],parsed['expires'],parsed['ss'])
-          session[:facebook_session] = @facebook_session
+          @facebook_session
       end
     
       def secure_with_token!
@@ -109,7 +119,7 @@ module Facebooker
           @facebook_session = new_facebook_session
           @facebook_session.auth_token = params['auth_token']
           @facebook_session.secure!
-          session[:facebook_session] = @facebook_session
+          @facebook_session
         end
       end
       
@@ -119,7 +129,7 @@ module Facebooker
         if ['user', 'session_key'].all? {|element| facebook_params[element]}
           @facebook_session = new_facebook_session
           @facebook_session.secure_with!(facebook_params['session_key'], facebook_params['user'], facebook_params['expires'])
-          session[:facebook_session] = @facebook_session
+          @facebook_session
         end
       end
       
@@ -228,6 +238,9 @@ module Facebooker
       def ensure_has_photo_upload
         has_extended_permission?("photo_upload") || application_needs_permission("photo_upload")
       end
+      def ensure_has_video_upload
+        has_extended_permission?("video_upload") || application_needs_permission("video_upload")
+      end
       def ensure_has_create_listing
         has_extended_permission?("create_listing") || application_needs_permission("create_listing")
       end
@@ -256,9 +269,14 @@ module Facebooker
         redirect_to session[:facebook_session].install_url(url_params)
       end
       
-      def set_fbml_format
-        params[:format]="fbml" if request_comes_from_facebook?
+      def set_facebook_request_format
+        if request_is_facebook_ajax?
+          params[:format] = 'fbjs'
+        elsif request_comes_from_facebook?
+          params[:format] = 'fbml'
+        end
       end
+      
       def set_adapter
         Facebooker.load_adapter(params) if(params[:fb_sig_api_key])
       end
@@ -275,6 +293,10 @@ module Facebooker
         
         def ensure_application_is_installed_by_facebook_user(options = {})
           before_filter :ensure_application_is_installed_by_facebook_user, options
+        end
+        
+        def request_comes_from_facebook?
+          request_is_for_a_facebook_canvas? || request_is_facebook_ajax?
         end
       end
     end

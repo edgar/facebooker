@@ -94,6 +94,19 @@ module Facebooker
       "#{Facebooker.install_url_base(@api_key)}#{install_url_optional_parameters(options)}"
     end
     
+    # The url to get user to approve extended permissions
+    # http://wiki.developers.facebook.com/index.php/Extended_permission
+    #
+    # permissions:
+    # * email
+    # * offline_access
+    # * status_update
+    # * photo_upload
+    # * video_upload
+    # * create_listing
+    # * create_event
+    # * rsvp_event
+    # * sms
     def permission_url(permission,options={})
       options = default_login_url_options.merge(options)
       "http://#{Facebooker.www_server_base_url}/authorize.php?api_key=#{@api_key}&v=1.0&ext_perm=#{permission}#{install_url_optional_parameters(options)}"
@@ -176,6 +189,10 @@ module Facebooker
             user
           when 'photo'
             Photo.from_hash(hash)
+          when 'page'
+            Page.from_hash(hash)
+          when 'page_admin'
+            Page.from_hash(hash)
           when 'event_member'
             Event::Attendance.from_hash(hash)
           else
@@ -254,6 +271,10 @@ module Facebooker
     
     def admin
       Facebooker::Admin.new(self)
+    end
+    
+    def mobile
+      Facebooker::Mobile.new(self)
     end
     
     #
@@ -492,10 +513,11 @@ module Facebooker
     end
     
     def post_file(method, params = {})
+      base = params.delete(:base)
       Logging.log_fb_api(method, params) do
         add_facebook_params(params, method)
         @session_key && params[:session_key] ||= @session_key
-        service.post_file(params.merge(:sig => signature_for(params.reject{|key, value| key.nil?})))
+        service.post_file(params.merge(:base => base, :sig => signature_for(params.reject{|key, value| key.nil?})))
       end
     end
     

@@ -1,15 +1,4 @@
-require File.dirname(__FILE__) + '/test_helper.rb'
-require 'rubygems'
-require 'flexmock/test_unit'
-require 'action_controller'
-require 'action_controller/test_process'
-require 'active_record'
-require File.dirname(__FILE__)+'/../init'
-require 'facebooker/rails/controller'
-require 'facebooker/rails/helpers/fb_connect'
-require 'facebooker/rails/helpers'
-require 'facebooker/rails/publisher'
-
+require File.expand_path(File.dirname(__FILE__) + '/../../rails_test_helper')
 
 module SymbolHelper
   def symbol_helper_loaded
@@ -143,7 +132,7 @@ class TestPublisher < Facebooker::Rails::Publisher
   
 end
 
-class FacebookTemplateTest < Test::Unit::TestCase
+class Facebooker::Rails::Publisher::FacebookTemplateTest < Test::Unit::TestCase
   FacebookTemplate = Facebooker::Rails::Publisher::FacebookTemplate
   
   def setup
@@ -207,7 +196,7 @@ class FacebookTemplateTest < Test::Unit::TestCase
   end
 end
 
-class PublisherTest < Test::Unit::TestCase
+class Facebooker::Rails::Publisher::PublisherTest < Test::Unit::TestCase
   FacebookTemplate = Facebooker::Rails::Publisher::FacebookTemplate
   
   def setup
@@ -410,12 +399,17 @@ class PublisherTest < Test::Unit::TestCase
   
   def test_image_urls
     Facebooker.expects(:facebook_path_prefix).returns("/mike")
-    assert_equal({:src => '/images/image.png', :href => 'raw_string' },
-        TestPublisher.new.image('image.png', 'raw_string'))
-    assert_equal({:src => '/images/image.png', :href => 'http://apps.facebook.com/mike/pokes/do/1' },
-        TestPublisher.new.image('image.png', {:controller => :pokes, :action => :do, :id => 1}))
+    string_image = TestPublisher.new.image('image.png', 'raw_string')
+    assert_equal('/images/image.png',string_image.src)
+    assert_equal('raw_string',string_image.href)
+    route_image = TestPublisher.new.image('image.png', {:controller => :pokes, :action => :do, :id => 1})
+    assert_equal('http://apps.facebook.com/mike/pokes/do/1',route_image.href)
   end
   
+  def test_image_to_json_puts_src_first
+    string_image = TestPublisher.new.image('image.png', 'raw_string')
+    assert_equal "{\"src\":\"/images/image.png\", \"href\":\"raw_string\"}",string_image.to_json
+  end
   def test_action_link
     assert_equal({:text=>"text", :href=>"href"}, TestPublisher.new.action_link("text","href"))
   end

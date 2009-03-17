@@ -3,6 +3,12 @@
 require 'rubygems'
 ENV['RUBY_FLAGS']="-I#{%w(lib ext bin test).join(File::PATH_SEPARATOR)}"
 require 'hoe'
+begin
+  require 'load_multi_rails_rake_tasks'
+rescue LoadError
+  $stderr.puts "Install the multi_rails gem to run tests against multiple versions of Rails"
+end
+
  $: << File.dirname(__FILE__) + '/lib'
 require './lib/facebooker.rb'
 
@@ -15,7 +21,7 @@ Hoe.new('facebooker', Facebooker::VERSION::STRING) do |p|
   p.url = p.paragraphs_of('README.txt', 0).first.split(/\n/)[1..-1]
   p.changes = p.paragraphs_of('History.txt', 0..1).join("\n\n")
   p.remote_rdoc_dir = '' # Release to root
-  p.test_globs = 'test/*.rb'
+  p.test_globs = 'test/**/*_test.rb'
   p.extra_deps << ['json', '>= 1.0.0'] 
 end
 
@@ -29,9 +35,10 @@ namespace :test do
   desc 'Aggregate code coverage for unit, functional and integration tests'
   Rcov::RcovTask.new(:coverage) do |t|
     t.libs << "test"
-    t.test_files = FileList["test/*.rb"]
+    t.test_files = FileList["test/**/*_test.rb"]
     t.output_dir = "coverage/"
     t.verbose = true
+    t.rcov_opts = ['--exclude', 'test,/usr/lib/ruby,/Library/Ruby,/System/Library', '--sort', 'coverage']
   end
 end
 

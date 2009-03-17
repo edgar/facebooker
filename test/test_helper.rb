@@ -1,9 +1,13 @@
 require 'test/unit'
 require 'rubygems'
+begin
+  require 'multi_rails_init'
+rescue LoadError
+  # multi rails not installed, test against newest supported version of Rails
+  gem 'rails', '2.2.2'
+end
 require 'flexmock/test_unit'
 require 'mocha'
-
-require File.dirname(__FILE__)+'/../lib/facebooker/rails/test_helpers'
 
 $: << File.join(File.dirname(__FILE__), '..', 'lib')
 
@@ -15,6 +19,8 @@ else
 end
 
 require 'facebooker'
+require 'facebooker/rails/test_helpers'
+
 
 class Test::Unit::TestCase
   include Facebooker::Rails::TestHelpers
